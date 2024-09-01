@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -18,17 +19,18 @@ const (
 
 var (
 	STARTED = false
+
+	board [ROWS][COLUMNS]int
 )
 
 type Game struct {
-	board_solved   *Board
-	board_unsolved *Board
+	board_solved *Board
+	//board_unsolved *Board
 	//boardTile      [][]*BoardTile
 }
 
 type Board struct {
-	tile          [ROWS][COLUMNS]int
-	rows, columns int
+	tile [][]int
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -36,7 +38,13 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) Update() error {
+	//LaunchGame(g)
+	if !STARTED {
+		board_createTEST(g)
+		board_shuffleTEST(g)
 
+		STARTED = true
+	}
 	//g.input.Update()
 	// if err := g.board.checkMove(&g.input.move); err != nil {
 	// 	return err
@@ -68,24 +76,49 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	game := Game{}
+	game := Game{
+		board_solved: &Board{},
+	}
 
 	if err := ebiten.RunGame(&game); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func (g *Game) LaunchGame() {
+func LaunchGame(g *Game) {
 	if !STARTED {
-		g.board_solved.rows = ROWS
-		g.board_solved.columns = COLUMNS
-
-		for i := 0; i < g.board_solved.rows; i++ {
-			for j := 0; j < g.board_solved.columns; j++ {
+		for i := 0; i < ROWS; i++ {
+			for j := 0; j < COLUMNS; j++ {
 				g.board_solved.tile[i][j] = 0
+				fmt.Print(g.board_solved.tile[i][j], "-")
+				time.Sleep(time.Millisecond * 10)
 			}
+			fmt.Println("")
 		}
 		fmt.Println("Game Started")
+		STARTED = true
 	}
-	STARTED = true
+}
+
+func board_createTEST(g *Game) {
+	if !STARTED {
+		fmt.Println("1 - Starting Game")
+		for i := 0; i < ROWS; i++ {
+			for j := 0; j < COLUMNS; j++ {
+				board[i][j] = 0
+				if j == ROWS-1 {
+					fmt.Print(board[i][j])
+				} else {
+					fmt.Print(board[i][j], "-")
+				}
+				time.Sleep(time.Millisecond * 10)
+			}
+			fmt.Println("")
+		}
+		fmt.Println("2 - Board created")
+	}
+}
+
+func board_shuffleTEST(g *Game) {
+
 }
