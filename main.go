@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image/color"
 	"log"
+	"math/rand/v2"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -106,19 +107,53 @@ func board_createTEST(g *Game) {
 		for i := 0; i < ROWS; i++ {
 			for j := 0; j < COLUMNS; j++ {
 				board[i][j] = 0
-				if j == ROWS-1 {
-					fmt.Print(board[i][j])
-				} else {
-					fmt.Print(board[i][j], "-")
-				}
-				time.Sleep(time.Millisecond * 10)
 			}
-			fmt.Println("")
 		}
-		fmt.Println("2 - Board created")
+		printBoard()
 	}
 }
 
 func board_shuffleTEST(g *Game) {
+	if !STARTED {
+		for i := 0; i < ROWS; i++ {
+			chosen := [9]int{0, 0, 0, 0, 0, 0, 0, 0, 0}
+			for j := 0; j < COLUMNS; j++ {
+				num := rand.IntN(9) + 1
+				for wasChosen(num, chosen[:]) {
+					num = rand.IntN(9) + 1
+				}
+				chosen[i] = num
+			}
 
+			for k := 0; k < COLUMNS; k++ {
+				board[i][k] = chosen[k]
+			}
+		}
+		printBoard()
+	}
+}
+
+func printBoard() {
+	for i := 0; i < ROWS; i++ {
+		for j := 0; j < COLUMNS; j++ {
+			board[i][j] = 0
+			if j == ROWS-1 {
+				fmt.Print(board[i][j])
+			} else {
+				fmt.Print(board[i][j], "-")
+			}
+			time.Sleep(time.Millisecond * 10)
+		}
+		fmt.Println("")
+	}
+	fmt.Println("")
+}
+
+func wasChosen(num int, chosen []int) bool {
+	for i := 0; i < len(chosen); i++ {
+		if chosen[i] == num {
+			return true
+		}
+	}
+	return false
 }
