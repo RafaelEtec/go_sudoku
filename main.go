@@ -20,32 +20,24 @@ const (
 
 var (
 	STARTED = false
-
-	board [ROWS][COLUMNS]int
+	BOARD   = [ROWS][COLUMNS]int{}
 )
 
 type Game struct {
-	board_solved *Board
+	//board_solved *Board
 	//board_unsolved *Board
 	//boardTile      [][]*BoardTile
 }
 
-type Board struct {
-	tile [][]int
-}
+// type Board struct {
+// 	tile [][]int
+// }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
 	return ScreenWidth, ScreenHeight
 }
 
 func (g *Game) Update() error {
-	//LaunchGame(g)
-	if !STARTED {
-		board_createTEST(g)
-		board_shuffleTEST(g)
-
-		STARTED = true
-	}
 	//g.input.Update()
 	// if err := g.board.checkMove(&g.input.move); err != nil {
 	// 	return err
@@ -77,81 +69,76 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	game := Game{
-		board_solved: &Board{},
+	if !STARTED {
+		//boardFillTest(&Game{})
+		printBoard()
+		boardShuffleTest()
+		printBoard()
+
+		STARTED = true
 	}
+
+	game := Game{}
 
 	if err := ebiten.RunGame(&game); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func LaunchGame(g *Game) {
-	if !STARTED {
-		for i := 0; i < ROWS; i++ {
-			for j := 0; j < COLUMNS; j++ {
-				g.board_solved.tile[i][j] = 0
-				fmt.Print(g.board_solved.tile[i][j], "-")
-				time.Sleep(time.Millisecond * 10)
-			}
-			fmt.Println("")
-		}
-		fmt.Println("Game Started")
-		STARTED = true
-	}
-}
+// func boardFillTest(g *Game) {
+// 	if !STARTED {
+// 		fmt.Println("1 - Starting Game\n2 - Filling board")
+// 		for i := 0; i < ROWS; i++ {
+// 			for j := 0; j < COLUMNS; j++ {
+// 				BOARD[i][j] = 0
+// 			}
+// 		}
+// 	}
+// }
 
-func board_createTEST(g *Game) {
+func boardShuffleTest() {
 	if !STARTED {
-		fmt.Println("1 - Starting Game")
+		var num int
 		for i := 0; i < ROWS; i++ {
 			for j := 0; j < COLUMNS; j++ {
-				board[i][j] = 0
-			}
-		}
-		printBoard()
-	}
-}
-
-func board_shuffleTEST(g *Game) {
-	if !STARTED {
-		for i := 0; i < ROWS; i++ {
-			chosen := [9]int{0, 0, 0, 0, 0, 0, 0, 0, 0}
-			for j := 0; j < COLUMNS; j++ {
-				num := rand.IntN(9) + 1
-				for wasChosen(num, chosen[:]) {
+				num = rand.IntN(9) + 1
+				for appearsInRow(num, i, j) && appearsInCollumn(num, j, i) {
 					num = rand.IntN(9) + 1
 				}
-				chosen[i] = num
+				BOARD[i][j] = num
 			}
-
-			for k := 0; k < COLUMNS; k++ {
-				board[i][k] = chosen[k]
-			}
+			printBoard()
 		}
-		printBoard()
 	}
 }
 
 func printBoard() {
 	for i := 0; i < ROWS; i++ {
 		for j := 0; j < COLUMNS; j++ {
-			board[i][j] = 0
 			if j == ROWS-1 {
-				fmt.Print(board[i][j])
+				fmt.Print(BOARD[i][j])
 			} else {
-				fmt.Print(board[i][j], "-")
+				fmt.Print(BOARD[i][j], "-")
 			}
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Millisecond * 1)
 		}
 		fmt.Println("")
 	}
 	fmt.Println("")
 }
 
-func wasChosen(num int, chosen []int) bool {
-	for i := 0; i < len(chosen); i++ {
-		if chosen[i] == num {
+func appearsInRow(num int, row int, column int) bool {
+	for i := 0; i < column; i++ {
+		if BOARD[row][i] == num {
+			return true
+		}
+	}
+	return false
+}
+
+func appearsInCollumn(num int, column int, row int) bool {
+	for i := 0; i < row; i++ {
+		if BOARD[i][column] == num {
 			return true
 		}
 	}
