@@ -1,25 +1,37 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
+	"math/rand"
+	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 )
 
 const (
-	SCREEN_WIDTH  = 256
-	SCREEN_HEIGHT = 240
+	SCREEN_WIDTH  = 294
+	SCREEN_HEIGHT = 308
 
 	FRAME_OX     = 0
 	FRAME_OY     = 0
 	FRAME_WIDTH  = 32
 	FRAME_HEIGHT = 32
 
+	BOARD_WIDTH  = 292
+	BOARD_HEIGHT = 292
+
 	ROWS    = 9
 	COLUMNS = 9
+
+	MESSAGE_MOVES  = "Moves: %d"
+	MESSAGE_MISSES = "Misses: %d"
+
+	STARTING_NUMBERS = 38
 )
 
 const (
@@ -40,19 +52,25 @@ var (
 )
 
 type Game struct {
-	moves  int
 	misses int
 	state  int
 	board  *Board
+	aux    [][]*Tile
 }
+
+// state: 0 = stopped
+//        1 = playing
+//        2 = won
 
 type Board struct {
 	tiles [][]*Tile
 }
 
 type Tile struct {
-	Img   *ebiten.Image
-	Value int
+	Img        *ebiten.Image
+	Value      int
+	isEditable bool
+	isRight    bool
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -60,8 +78,234 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func (g *Game) Update() error {
-	// TODO
+	if g.state == 1 {
+		handleMouse(g)
+		//handleKeyboard(g)
+	}
+
 	return nil
+}
+
+func handleMouse(g *Game) {
+	if inpututil.IsMouseButtonJustPressed(0) {
+		x, y := ebiten.CursorPosition()
+		fmt.Printf("X: %d\nY: %d\n", x, y)
+		px, py := whereWasClicked(x, y)
+		fmt.Printf("X: %d\nY: %d\n", px, py)
+
+		if isInBounds(g, px, py) {
+			g.board.tiles[px][py].Value = rand.Intn(9) + 1
+		}
+	}
+}
+
+func whereWasClicked(x int, y int) (int, int) {
+	space := 4
+
+	if x >= space && x <= BOARD_WIDTH && y >= space && y <= BOARD_HEIGHT {
+		if x >= 0 && x <= FRAME_WIDTH*t1 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 0, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 0, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 0, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 0, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 0, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 0, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 0, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 0, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 0, 8
+			}
+		}
+		if x >= FRAME_WIDTH && x <= FRAME_WIDTH*t2 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 1, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 1, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 1, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 1, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 1, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 1, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 1, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 1, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 1, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t2 && x <= FRAME_WIDTH*t3 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 2, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 2, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 2, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 2, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 2, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 2, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 2, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 2, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 2, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t3 && x <= FRAME_WIDTH*t4 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 3, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 3, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 3, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 3, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 3, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 3, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 3, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 3, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 3, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t4 && x <= FRAME_WIDTH*t5 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 4, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 4, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 4, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 4, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 4, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 4, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 4, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 4, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 4, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t5 && x <= FRAME_WIDTH*t6 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 5, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 5, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 5, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 5, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 5, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 5, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 5, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 5, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 5, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t6 && x <= FRAME_WIDTH*t7 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 6, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 6, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 6, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 6, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 6, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 6, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 6, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 6, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 6, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t7 && x <= FRAME_WIDTH*t8 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 7, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 7, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 7, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 7, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 7, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 7, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 7, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 7, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 7, 8
+			}
+		}
+		if x >= FRAME_WIDTH*t8 && x <= FRAME_WIDTH*t9 {
+			if y >= 0 && y <= FRAME_HEIGHT*t1 {
+				return 8, 0
+			} else if y >= FRAME_HEIGHT*t1 && y <= FRAME_HEIGHT*t2 {
+				return 8, 1
+			} else if y >= FRAME_HEIGHT*t2 && y <= FRAME_HEIGHT*t3 {
+				return 8, 2
+			} else if y >= FRAME_HEIGHT*t3 && y <= FRAME_HEIGHT*t4 {
+				return 8, 3
+			} else if y >= FRAME_HEIGHT*t4 && y <= FRAME_HEIGHT*t5 {
+				return 8, 4
+			} else if y >= FRAME_HEIGHT*t5 && y <= FRAME_HEIGHT*t6 {
+				return 8, 5
+			} else if y >= FRAME_HEIGHT*t6 && y <= FRAME_HEIGHT*t7 {
+				return 8, 6
+			} else if y >= FRAME_HEIGHT*t7 && y <= FRAME_HEIGHT*t8 {
+				return 8, 7
+			} else if y >= FRAME_HEIGHT*t8 && y <= FRAME_HEIGHT*t9 {
+				return 8, 8
+			}
+		}
+	}
+	return -1, -1
+}
+
+func isInBounds(g *Game, px int, py int) bool {
+	if px != -1 && py != -1 {
+		return g.board.tiles[px][py].Value == 0
+	}
+	return false
+}
+
+func isInAux(g *Game, px int, py int) bool {
+
+	return false
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -70,7 +314,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	opts := ebiten.DrawImageOptions{}
 
 	drawTiles(g, opts, screen)
-	//drawStats(g, screen)
+	drawStats(g, screen)
 }
 
 func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
@@ -78,16 +322,35 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 		for c := 0; c < COLUMNS; c++ {
 			tile := g.board.tiles[r][c]
 
-			fox, foy, fw, fh := FRAME_OX, FRAME_OY, FRAME_WIDTH, FRAME_HEIGHT*2
+			fox, foy, fw, fh := FRAME_OX, FRAME_OY, FRAME_WIDTH, FRAME_HEIGHT
 			switch tile.Value {
 			case 1:
-				foy += 64
-				fw *= 2
+				foy += 32
 				fh *= 2
 			case 2:
-				foy += 64
-				fw *= 2
-				fh *= 2
+				foy += 32 * 2
+				fh *= 3
+			case 3:
+				foy += 32 * 3
+				fh *= 4
+			case 4:
+				foy += 32 * 4
+				fh *= 5
+			case 5:
+				foy += 32 * 5
+				fh *= 6
+			case 6:
+				foy += 32 * 6
+				fh *= 7
+			case 7:
+				foy += 32 * 7
+				fh *= 8
+			case 8:
+				foy += 32 * 8
+				fh *= 9
+			case 9:
+				foy += 32 * 9
+				fh *= 10
 			default:
 			}
 
@@ -98,288 +361,53 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 				).(*ebiten.Image),
 				&opts,
 			)
+			opts.GeoM.Reset()
 		}
 	}
 }
 
+func drawStats(g *Game, screen *ebiten.Image) {
+	misses := fmt.Sprintf(MESSAGE_MISSES, g.misses)
+
+	ebitenutil.DebugPrintAt(screen, misses, 216, 290)
+}
+
 func main() {
 
-	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	game := Game{
-		moves:  0,
 		misses: 0,
-		state:  0,
+		state:  1,
 		board: &Board{
 			tiles: [][]*Tile{
-				{
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				}, {
-					{
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					}, {
-						Img:   tile,
-						Value: 0,
-					},
-				},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+				{{}, {}, {}, {}, {}, {}, {}, {}, {}},
 			},
 		},
+		aux: [][]*Tile{
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+			{{}, {}, {}, {}, {}, {}, {}, {}, {}},
+		},
 	}
+
+	createAuxBoard(game)
+	createBoard(game)
+
+	fillAuxBoard(game)
+	fillBoard(game)
 
 	ebiten.SetWindowSize(SCREEN_WIDTH*2, SCREEN_HEIGHT*2)
 	ebiten.SetWindowTitle("SUDOKU by Rafael Goulart")
@@ -388,61 +416,115 @@ func main() {
 	}
 }
 
-// func boardFillTest(g *Game) {
-// 	if !STARTED {
-// 		fmt.Println("1 - Starting Game\n2 - Filling board")
-// 		for i := 0; i < ROWS; i++ {
-// 			for j := 0; j < COLUMNS; j++ {
-// 				BOARD[i][j] = 0
-// 			}
-// 		}
-// 	}
-// }
+func createAuxBoard(g Game) {
+	for r := 0; r < ROWS; r++ {
+		for c := 0; c < COLUMNS; c++ {
+			g.aux[r][c].Value = 0
+		}
+	}
+}
 
-// func boardShuffleTest() {
-// 	if !STARTED {
-// 		var num int
-// 		for i := 0; i < ROWS; i++ {
-// 			for j := 0; j < COLUMNS; j++ {
-// 				num = rand.IntN(9) + 1
-// 				for appearsInRow(num, i, j) || appearsInCollumn(num, j, i) {
-// 					num = rand.IntN(9) + 1
-// 				}
-// 				BOARD[i][j] = num
-// 			}
-// 		}
-// 	}
-// }
+func createBoard(g Game) {
+	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
+	if err != nil {
+		log.Fatal(err)
+	}
 
-// func printBoard() {
-// 	for i := 0; i < ROWS; i++ {
-// 		for j := 0; j < COLUMNS; j++ {
-// 			if j == ROWS-1 {
-// 				fmt.Print(BOARD[i][j])
-// 			} else {
-// 				fmt.Print(BOARD[i][j], "-")
-// 			}
-// 			time.Sleep(time.Millisecond * 1)
-// 		}
-// 		fmt.Println("")
-// 	}
-// 	fmt.Println("")
-// }
+	for r := 0; r < ROWS; r++ {
+		for c := 0; c < COLUMNS; c++ {
+			g.board.tiles[r][c].Img = tile
+			g.board.tiles[r][c].Value = 0
+			g.board.tiles[r][c].isEditable = true
+			g.board.tiles[r][c].isRight = false
+		}
+	}
+}
 
-// func appearsInRow(num int, row int, column int) bool {
-// 	for i := 0; i < column; i++ {
-// 		if BOARD[row][i] == num {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+func fillAuxBoard(g Game) {
+	for i := 0; i < STARTING_NUMBERS; i++ {
+		randr := rand.Intn(9)
+		randc := rand.Intn(9)
+		num := rand.Intn(9) + 1
 
-// func appearsInCollumn(num int, column int, row int) bool {
-// 	for i := 0; i < row; i++ {
-// 		if BOARD[i][column] == num {
-// 			return true
-// 		}
-// 	}
-// 	return false
-// }
+		if g.aux[randr][randc].Value == 0 && !appearsInRow(g, num, randr, randc) && !appearsInCollumn(g, num, randr, randc) {
+			g.aux[randr][randc].Value = num
+		}
+	}
+
+	printBoard(g)
+}
+
+func fillBoard(g Game) {
+	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tile_right, _, err := ebitenutil.NewImageFromFile("assets/images/numbers_right.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for i := 0; i < ROWS; i++ {
+		for j := 0; j < COLUMNS; j++ {
+			g.board.tiles[i][j].Value = g.aux[i][j].Value
+			if g.board.tiles[i][j].Value != 0 {
+				g.board.tiles[i][j].Img = tile_right
+				g.board.tiles[i][j].isEditable = false
+				g.board.tiles[i][j].isRight = true
+			} else {
+				g.board.tiles[i][j].Img = tile
+			}
+		}
+	}
+	printBoard(g)
+	printAuxBoard(g)
+}
+
+func printBoard(g Game) {
+	for i := 0; i < ROWS; i++ {
+		for j := 0; j < COLUMNS; j++ {
+			if j == ROWS-1 {
+				fmt.Print(g.board.tiles[i][j].Value)
+			} else {
+				fmt.Print(g.board.tiles[i][j].Value, "-")
+			}
+			time.Sleep(time.Millisecond * 1)
+		}
+		fmt.Println("")
+	}
+	fmt.Println("")
+}
+
+func printAuxBoard(g Game) {
+	for i := 0; i < ROWS; i++ {
+		for j := 0; j < COLUMNS; j++ {
+			if j == ROWS-1 {
+				fmt.Print(g.aux[i][j].Value)
+			} else {
+				fmt.Print(g.aux[i][j].Value, "-")
+			}
+			time.Sleep(time.Millisecond * 1)
+		}
+		fmt.Println("")
+	}
+	fmt.Println("")
+}
+
+func appearsInRow(g Game, num int, row int, column int) bool {
+	for i := 0; i < column; i++ {
+		if g.aux[row][i].Value == num {
+			return true
+		}
+	}
+	return false
+}
+
+func appearsInCollumn(g Game, num int, column int, row int) bool {
+	for i := 0; i < row; i++ {
+		if g.aux[i][column].Value == num {
+			return true
+		}
+	}
+	return false
+}
