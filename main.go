@@ -22,8 +22,8 @@ const (
 	FRAME_WIDTH  = 32
 	FRAME_HEIGHT = 32
 
-	BOARD_WIDTH  = 292
-	BOARD_HEIGHT = 292
+	BOARD_WIDTH  = 288
+	BOARD_HEIGHT = 288
 
 	ROWS    = 9
 	COLUMNS = 9
@@ -100,9 +100,9 @@ func handleMouse(g *Game) {
 }
 
 func whereWasClicked(x int, y int) (int, int) {
-	space := 4
-
-	if x >= space && x <= BOARD_WIDTH && y >= space && y <= BOARD_HEIGHT {
+	x -= 2
+	y -= 2
+	if x >= 0 && x <= BOARD_WIDTH && y >= 0 && y <= BOARD_HEIGHT {
 		if x >= 0 && x <= FRAME_WIDTH*t1 {
 			if y >= 0 && y <= FRAME_HEIGHT*t1 {
 				return 0, 0
@@ -354,7 +354,10 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 			default:
 			}
 
-			opts.GeoM.Translate(float64(r)*32, float64(c)*32)
+			rspace := r/3 + 2
+			cspace := c/3 + 2
+
+			opts.GeoM.Translate(float64(r)*32+float64(rspace), float64(c)*32+float64(cspace))
 			screen.DrawImage(
 				tile.Img.SubImage(
 					image.Rect(fox, foy, fw, fh),
