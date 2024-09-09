@@ -5,7 +5,6 @@ import (
 	"image"
 	"image/color"
 	"log"
-	"math/rand"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -49,6 +48,9 @@ const (
 
 var (
 	STARTED = false
+
+	X = -1
+	Y = -1
 )
 
 type Game struct {
@@ -79,24 +81,77 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func (g *Game) Update() error {
 	if g.state == 1 {
-		handleMouse(g)
-		//handleKeyboard(g)
+		px, py := handleMouse()
+		if px != -1 && py != -1 {
+			X = px
+			Y = py
+		}
+		handleKeyboard(g, X, Y)
 	}
+
+	restart(g)
 
 	return nil
 }
 
-func handleMouse(g *Game) {
+func handleKeyboard(g *Game, x int, y int) {
+	if x != -1 && y != -1 {
+		if inpututil.IsKeyJustReleased(ebiten.Key0) {
+			g.board.tiles[x][y].Value = t0
+		} else if inpututil.IsKeyJustReleased(ebiten.Key1) {
+			g.board.tiles[x][y].Value = t1
+		} else if inpututil.IsKeyJustPressed(ebiten.Key2) {
+			g.board.tiles[x][y].Value = t2
+		} else if inpututil.IsKeyJustPressed(ebiten.Key3) {
+			g.board.tiles[x][y].Value = t3
+		} else if inpututil.IsKeyJustPressed(ebiten.Key4) {
+			g.board.tiles[x][y].Value = t4
+		} else if inpututil.IsKeyJustPressed(ebiten.Key5) {
+			g.board.tiles[x][y].Value = t5
+		} else if inpututil.IsKeyJustPressed(ebiten.Key6) {
+			g.board.tiles[x][y].Value = t6
+		} else if inpututil.IsKeyJustPressed(ebiten.Key7) {
+			g.board.tiles[x][y].Value = t7
+		} else if inpututil.IsKeyJustPressed(ebiten.Key8) {
+			g.board.tiles[x][y].Value = t8
+		} else if inpututil.IsKeyJustPressed(ebiten.Key9) {
+			g.board.tiles[x][y].Value = t9
+		}
+		handleBoard(g)
+	}
+
+}
+
+func handleMouse() (int, int) {
+	px, py := -1, -1
 	if inpututil.IsMouseButtonJustPressed(0) {
 		x, y := ebiten.CursorPosition()
 		fmt.Printf("X: %d\nY: %d\n", x, y)
-		px, py := whereWasClicked(x, y)
+		px, py = whereWasClicked(x, y)
 		fmt.Printf("X: %d\nY: %d\n", px, py)
-
-		if isInBounds(g, px, py) {
-			g.board.tiles[px][py].Value = rand.Intn(9) + 1
-		}
 	}
+	return px, py
+}
+
+func handleBoard(g *Game) {
+
+}
+
+func restart(g *Game) {
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		g.misses = 0
+		g.state = 1
+		createAuxBoard(g)
+		createBoard(g)
+
+		fillAuxBoard(g)
+		fillBoard(g)
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
+		printAuxBoard(g)
+		printBoard(g)
+	}
+
 }
 
 func whereWasClicked(x int, y int) (int, int) {
@@ -377,7 +432,7 @@ func drawStats(g *Game, screen *ebiten.Image) {
 
 func main() {
 
-	game := Game{
+	game := &Game{
 		misses: 0,
 		state:  1,
 		board: &Board{
@@ -412,14 +467,16 @@ func main() {
 	fillAuxBoard(game)
 	fillBoard(game)
 
+	solution(game)
+
 	ebiten.SetWindowSize(SCREEN_WIDTH*2, SCREEN_HEIGHT*2)
 	ebiten.SetWindowTitle("SUDOKU by Rafael Goulart")
-	if err := ebiten.RunGame(&game); err != nil {
+	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func createAuxBoard(g Game) {
+func createAuxBoard(g *Game) {
 	for r := 0; r < ROWS; r++ {
 		for c := 0; c < COLUMNS; c++ {
 			g.aux[r][c].Value = 0
@@ -427,7 +484,7 @@ func createAuxBoard(g Game) {
 	}
 }
 
-func createBoard(g Game) {
+func createBoard(g *Game) {
 	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
 	if err != nil {
 		log.Fatal(err)
@@ -443,21 +500,75 @@ func createBoard(g Game) {
 	}
 }
 
-func fillAuxBoard(g Game) {
-	for i := 0; i < STARTING_NUMBERS; i++ {
-		randr := rand.Intn(9)
-		randc := rand.Intn(9)
-		num := rand.Intn(9) + 1
+func fillAuxBoard(g *Game) {
+	quadrant := 1
+	qr, qc := 0, 0
+	mr, mc := 3, 3
 
-		if g.aux[randr][randc].Value == 0 && !appearsInRow(g, num, randr, randc) && !appearsInCollumn(g, num, randr, randc) {
-			g.aux[randr][randc].Value = num
+	for quadrant != 9 {
+
+		//possibles := make([]int, 0, 9)
+		savedqc := qc
+		for qr < mr {
+			for qc < mc {
+
+				g.aux[qr][qc].Value = quadrant
+				qc++
+			}
+			qr++
+			qc = savedqc
 		}
+		quadrant++
+
+		if quadrant == 4 {
+			qr += 3
+			qc = 0
+			mc = 3
+			mr += 3
+		} else if quadrant == 7 {
+			qr += 6
+			qc = 0
+			mc = 3
+			mr += 3
+		} else {
+			qr = 0
+			qc += 3
+		}
+
+		// if quadrant == 2 {
+		// 	qr = 0
+		// 	qc = 3
+		// 	mc = 6
+		// } else if quadrant == 3 {
+		// 	qr = 0
+		// 	qc = 6
+		// 	mc = 9
+		// } else if quadrant == 4 {
+		// 	qr = 3
+		// 	qc = 0
+		// 	mc = 3
+		// 	mr = 6
+		// } else if quadrant == 5 {
+		// 	qr = 3
+		// 	qc = 3
+		// 	mc = 6
+		// }
 	}
+
+	// for i := 0; i < STARTING_NUMBERS; i++ {
+	// 	randr := rand.Intn(9)
+	// 	randc := rand.Intn(9)
+	// 	num := rand.Intn(9) + 1
+
+	// 	if g.aux[randr][randc].Value == 0 && !appearsInRow(g, num, randr, randc) && !appearsInCollumn(g, num, randr, randc) {
+	// 		g.aux[randr][randc].Value = num
+	// 	}
+	// }
 
 	printBoard(g)
 }
 
-func fillBoard(g Game) {
+func fillBoard(g *Game) {
 	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
 	if err != nil {
 		log.Fatal(err)
@@ -484,7 +595,7 @@ func fillBoard(g Game) {
 	printAuxBoard(g)
 }
 
-func printBoard(g Game) {
+func printBoard(g *Game) {
 	for i := 0; i < ROWS; i++ {
 		for j := 0; j < COLUMNS; j++ {
 			if j == ROWS-1 {
@@ -499,7 +610,7 @@ func printBoard(g Game) {
 	fmt.Println("")
 }
 
-func printAuxBoard(g Game) {
+func printAuxBoard(g *Game) {
 	for i := 0; i < ROWS; i++ {
 		for j := 0; j < COLUMNS; j++ {
 			if j == ROWS-1 {
@@ -514,7 +625,11 @@ func printAuxBoard(g Game) {
 	fmt.Println("")
 }
 
-func appearsInRow(g Game, num int, row int, column int) bool {
+func solution(g *Game) {
+
+}
+
+func appearsInRow(g *Game, num int, row int, column int) bool {
 	for i := 0; i < column; i++ {
 		if g.aux[row][i].Value == num {
 			return true
@@ -523,7 +638,7 @@ func appearsInRow(g Game, num int, row int, column int) bool {
 	return false
 }
 
-func appearsInCollumn(g Game, num int, column int, row int) bool {
+func appearsInCollumn(g *Game, num int, column int, row int) bool {
 	for i := 0; i < row; i++ {
 		if g.aux[i][column].Value == num {
 			return true
