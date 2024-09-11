@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -86,7 +87,7 @@ func (g *Game) Update() error {
 			X = px
 			Y = py
 		}
-		handleKeyboard(g, X, Y)
+		handleKeyboard(g, Y, X)
 	}
 
 	restart(g)
@@ -412,7 +413,7 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 			rspace := r/3 + 2
 			cspace := c/3 + 2
 
-			opts.GeoM.Translate(float64(r)*32+float64(rspace), float64(c)*32+float64(cspace))
+			opts.GeoM.Translate(float64(c)*32+float64(cspace), float64(r)*32+float64(rspace))
 			screen.DrawImage(
 				tile.Img.SubImage(
 					image.Rect(fox, foy, fw, fh),
@@ -502,70 +503,106 @@ func createBoard(g *Game) {
 
 func fillAuxBoard(g *Game) {
 	quadrant := 1
+	//attempts := 0
 	qr, qc := 0, 0
 	mr, mc := 3, 3
 
-	for quadrant != 9 {
-
-		//possibles := make([]int, 0, 9)
+	for quadrant != 10 {
 		savedqc := qc
 		for qr < mr {
 			for qc < mc {
-
-				g.aux[qr][qc].Value = quadrant
-				qc++
+				num := rand.Intn(9) + 1
+				if !inQuadrant(g, num, quadrant) { //&& !appearsInRow(g, num, qr, qc) && !appearsInCollumn(g, num, qc, qr) {
+					g.aux[qr][qc].Value = num
+					qc++
+				}
+				// attempts++
+				// if attempts == 50 {
+				// 	quadrant--
+				// 	attempts = 0
+				// }
 			}
 			qr++
 			qc = savedqc
 		}
+
 		quadrant++
-
-		if quadrant == 4 {
-			qr += 3
-			qc = 0
-			mc = 3
-			mr += 3
-		} else if quadrant == 7 {
-			qr += 6
-			qc = 0
-			mc = 3
-			mr += 3
-		} else {
-			qr = 0
-			qc += 3
-		}
-
-		// if quadrant == 2 {
-		// 	qr = 0
-		// 	qc = 3
-		// 	mc = 6
-		// } else if quadrant == 3 {
-		// 	qr = 0
-		// 	qc = 6
-		// 	mc = 9
-		// } else if quadrant == 4 {
-		// 	qr = 3
-		// 	qc = 0
-		// 	mc = 3
-		// 	mr = 6
-		// } else if quadrant == 5 {
-		// 	qr = 3
-		// 	qc = 3
-		// 	mc = 6
-		// }
+		qr, qc, mc, mr = changeQuadrant(quadrant)
 	}
 
-	// for i := 0; i < STARTING_NUMBERS; i++ {
-	// 	randr := rand.Intn(9)
-	// 	randc := rand.Intn(9)
-	// 	num := rand.Intn(9) + 1
-
-	// 	if g.aux[randr][randc].Value == 0 && !appearsInRow(g, num, randr, randc) && !appearsInCollumn(g, num, randr, randc) {
-	// 		g.aux[randr][randc].Value = num
-	// 	}
-	// }
-
 	printBoard(g)
+}
+
+func inQuadrant(g *Game, num int, quadrant int) bool {
+	is := false
+
+	qr, qc, mc, mr := changeQuadrant(quadrant)
+
+	savedqc := qc
+	for qr < mr {
+		for qc < mc {
+			if num == g.aux[qr][qc].Value {
+				is = true
+			}
+
+			qc++
+		}
+		qr++
+		qc = savedqc
+	}
+
+	return is
+}
+
+func changeQuadrant(quadrant int) (int, int, int, int) {
+	var qr, qc, mc, mr int
+	if quadrant == 1 {
+		qr = 0
+		qc = 0
+		mc = 3
+		mr = 3
+	} else if quadrant == 2 {
+		qr = 0
+		qc = 3
+		mc = 6
+		mr = 3
+	} else if quadrant == 3 {
+		qr = 0
+		qc = 6
+		mc = 9
+		mr = 3
+	} else if quadrant == 4 {
+		qr = 3
+		qc = 0
+		mc = 3
+		mr = 6
+	} else if quadrant == 5 {
+		qr = 3
+		qc = 3
+		mc = 6
+		mr = 6
+	} else if quadrant == 6 {
+		qr = 3
+		qc = 6
+		mc = 9
+		mr = 6
+	} else if quadrant == 7 {
+		qr = 6
+		qc = 0
+		mc = 3
+		mr = 9
+	} else if quadrant == 8 {
+		qr = 6
+		qc = 3
+		mc = 6
+		mr = 9
+	} else if quadrant == 9 {
+		qr = 6
+		qc = 6
+		mc = 9
+		mr = 9
+	}
+	return qr, qc, mc, mr
 }
 
 func fillBoard(g *Game) {
