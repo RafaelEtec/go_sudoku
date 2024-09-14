@@ -471,10 +471,38 @@ func main() {
 	fillAuxBoard(game)
 	fillBoard(game)
 
+	removeSome(game)
+
 	ebiten.SetWindowSize(SCREEN_WIDTH*2, SCREEN_HEIGHT*2)
 	ebiten.SetWindowTitle("SUDOKU by Rafael Goulart")
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func removeSome(g *Game) {
+	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	squares := SIDE * SIDE
+	empties := squares * 3 / 4
+
+	positions := make([]int, squares)
+	for i := 0; i < squares; i++ {
+		positions[i] = i
+	}
+
+	rand.Shuffle(len(positions), func(i, j int) {
+		positions[i], positions[j] = positions[j], positions[i]
+	})
+
+	for _, p := range positions[:empties] {
+		g.board.tiles[p/SIDE][p%SIDE].Img = tile
+		g.board.tiles[p/SIDE][p%SIDE].Value = 0
+		g.board.tiles[p/SIDE][p%SIDE].isEditable = true
+		g.board.tiles[p/SIDE][p%SIDE].isRight = false
 	}
 }
 
