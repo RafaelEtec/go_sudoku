@@ -33,6 +33,8 @@ const (
 
 	MESSAGE_MOVES  = "Moves: %d"
 	MESSAGE_MISSES = "Misses: %d"
+	MESSAGE_LOST   = "Too many misses! You lose :/"
+	MESSAGE_WON    = "NICE, You completed the board!"
 
 	STARTING_NUMBERS = 38
 )
@@ -58,10 +60,11 @@ var (
 )
 
 type Game struct {
-	misses int
-	state  int
-	board  *Board
-	aux    [][]*Tile
+	misses  int
+	state   int
+	message string
+	board   *Board
+	aux     [][]*Tile
 }
 
 // state: 0 = stopped
@@ -91,7 +94,7 @@ func (g *Game) Update() error {
 			Y = py
 		}
 		handleKeyboard(g, Y, X)
-		handleGame(g)
+		handleMisses(g)
 	}
 
 	restart(g)
@@ -166,11 +169,19 @@ func handleBoard(g *Game, x int, y int, num int) {
 			g.board.tiles[x][y].Img = tile_wrong
 			g.misses++
 		}
+		handleWon(g)
 	}
 }
 
-func handleGame(g *Game) {
+func handleWon(g *Game) {
 
+}
+
+func handleMisses(g *Game) {
+	if g.misses == 10 {
+		g.state = 0
+		g.message = MESSAGE_LOST
+	}
 }
 
 func restart(g *Game) {
@@ -452,7 +463,9 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 func drawStats(g *Game, screen *ebiten.Image) {
 	misses := fmt.Sprintf(MESSAGE_MISSES, g.misses)
 
-	ebitenutil.DebugPrintAt(screen, misses, 216, 290)
+	ebitenutil.DebugPrintAt(screen, g.message, 0, 291)
+	ebitenutil.DebugPrintAt(screen, misses, 216, 291)
+
 }
 
 func main() {
