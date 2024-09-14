@@ -206,7 +206,7 @@ func restart(g *Game) {
 		fillBoard(g)
 
 		removeSome(g)
-		tileStats(g)
+		addStats(g)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		printAuxBoard(g)
