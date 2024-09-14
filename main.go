@@ -28,6 +28,9 @@ const (
 	ROWS    = 9
 	COLUMNS = 9
 
+	BASE = 3
+	SIDE = BASE * BASE
+
 	MESSAGE_MOVES  = "Moves: %d"
 	MESSAGE_MISSES = "Misses: %d"
 
@@ -468,13 +471,56 @@ func main() {
 	fillAuxBoard(game)
 	fillBoard(game)
 
-	solution(game)
-
 	ebiten.SetWindowSize(SCREEN_WIDTH*2, SCREEN_HEIGHT*2)
 	ebiten.SetWindowTitle("SUDOKU by Rafael Goulart")
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func pattern(r, c int) int {
+	return (BASE*(r%BASE) + r/BASE + c) % SIDE
+}
+
+func shuffle(s []int) []int {
+	shuffled := make([]int, len(s))
+	copy(shuffled, s)
+	rand.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled
+}
+
+func fillAuxBoard(g *Game) {
+	rBASE := make([]int, BASE)
+	for i := 0; i < BASE; i++ {
+		rBASE[i] = i
+	}
+
+	rows := make([]int, 0, SIDE)
+	cols := make([]int, 0, SIDE)
+	for g := range shuffle(rBASE) {
+		for r := range shuffle(rBASE) {
+			rows = append(rows, g*BASE+r)
+			cols = append(cols, g*BASE+r)
+		}
+	}
+
+	nums := shuffle(rangeSlice(1, BASE*BASE+1))
+
+	for r := 0; r < SIDE; r++ {
+		for c := 0; c < SIDE; c++ {
+			g.aux[r][c].Value = nums[pattern(rows[r], cols[c])]
+		}
+	}
+}
+
+func rangeSlice(start, end int) []int {
+	slice := make([]int, end-start)
+	for i := start; i < end; i++ {
+		slice[i-start] = i
+	}
+	return slice
 }
 
 func createAuxBoard(g *Game) {
@@ -499,110 +545,6 @@ func createBoard(g *Game) {
 			g.board.tiles[r][c].isRight = false
 		}
 	}
-}
-
-func fillAuxBoard(g *Game) {
-	quadrant := 1
-	//attempts := 0
-	qr, qc := 0, 0
-	mr, mc := 3, 3
-
-	for quadrant != 10 {
-		savedqc := qc
-		for qr < mr {
-			for qc < mc {
-				num := rand.Intn(9) + 1
-				if !inQuadrant(g, num, quadrant) { //&& !appearsInRow(g, num, qr, qc) && !appearsInCollumn(g, num, qc, qr) {
-					g.aux[qr][qc].Value = num
-					qc++
-				}
-				// attempts++
-				// if attempts == 50 {
-				// 	quadrant--
-				// 	attempts = 0
-				// }
-			}
-			qr++
-			qc = savedqc
-		}
-
-		quadrant++
-		qr, qc, mc, mr = changeQuadrant(quadrant)
-	}
-
-	printBoard(g)
-}
-
-func inQuadrant(g *Game, num int, quadrant int) bool {
-	is := false
-
-	qr, qc, mc, mr := changeQuadrant(quadrant)
-
-	savedqc := qc
-	for qr < mr {
-		for qc < mc {
-			if num == g.aux[qr][qc].Value {
-				is = true
-			}
-
-			qc++
-		}
-		qr++
-		qc = savedqc
-	}
-
-	return is
-}
-
-func changeQuadrant(quadrant int) (int, int, int, int) {
-	var qr, qc, mc, mr int
-	if quadrant == 1 {
-		qr = 0
-		qc = 0
-		mc = 3
-		mr = 3
-	} else if quadrant == 2 {
-		qr = 0
-		qc = 3
-		mc = 6
-		mr = 3
-	} else if quadrant == 3 {
-		qr = 0
-		qc = 6
-		mc = 9
-		mr = 3
-	} else if quadrant == 4 {
-		qr = 3
-		qc = 0
-		mc = 3
-		mr = 6
-	} else if quadrant == 5 {
-		qr = 3
-		qc = 3
-		mc = 6
-		mr = 6
-	} else if quadrant == 6 {
-		qr = 3
-		qc = 6
-		mc = 9
-		mr = 6
-	} else if quadrant == 7 {
-		qr = 6
-		qc = 0
-		mc = 3
-		mr = 9
-	} else if quadrant == 8 {
-		qr = 6
-		qc = 3
-		mc = 6
-		mr = 9
-	} else if quadrant == 9 {
-		qr = 6
-		qc = 6
-		mc = 9
-		mr = 9
-	}
-	return qr, qc, mc, mr
 }
 
 func fillBoard(g *Game) {
@@ -660,26 +602,4 @@ func printAuxBoard(g *Game) {
 		fmt.Println("")
 	}
 	fmt.Println("")
-}
-
-func solution(g *Game) {
-
-}
-
-func appearsInRow(g *Game, num int, row int, column int) bool {
-	for i := 0; i < column; i++ {
-		if g.aux[row][i].Value == num {
-			return true
-		}
-	}
-	return false
-}
-
-func appearsInCollumn(g *Game, num int, column int, row int) bool {
-	for i := 0; i < row; i++ {
-		if g.aux[i][column].Value == num {
-			return true
-		}
-	}
-	return false
 }
