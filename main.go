@@ -91,6 +91,7 @@ func (g *Game) Update() error {
 			Y = py
 		}
 		handleKeyboard(g, Y, X)
+		handleGame(g)
 	}
 
 	restart(g)
@@ -101,29 +102,27 @@ func (g *Game) Update() error {
 func handleKeyboard(g *Game, x int, y int) {
 	if x != -1 && y != -1 {
 		if inpututil.IsKeyJustReleased(ebiten.Key0) {
-			g.board.tiles[x][y].Value = t0
+			handleBoard(g, x, y, t0)
 		} else if inpututil.IsKeyJustReleased(ebiten.Key1) {
-			g.board.tiles[x][y].Value = t1
+			handleBoard(g, x, y, t1)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key2) {
-			g.board.tiles[x][y].Value = t2
+			handleBoard(g, x, y, t2)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key3) {
-			g.board.tiles[x][y].Value = t3
+			handleBoard(g, x, y, t3)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key4) {
-			g.board.tiles[x][y].Value = t4
+			handleBoard(g, x, y, t4)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key5) {
-			g.board.tiles[x][y].Value = t5
+			handleBoard(g, x, y, t5)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key6) {
-			g.board.tiles[x][y].Value = t6
+			handleBoard(g, x, y, t6)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key7) {
-			g.board.tiles[x][y].Value = t7
+			handleBoard(g, x, y, t7)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key8) {
-			g.board.tiles[x][y].Value = t8
+			handleBoard(g, x, y, t8)
 		} else if inpututil.IsKeyJustPressed(ebiten.Key9) {
-			g.board.tiles[x][y].Value = t9
+			handleBoard(g, x, y, t9)
 		}
-		handleBoard(g)
 	}
-
 }
 
 func handleMouse() (int, int) {
@@ -137,7 +136,40 @@ func handleMouse() (int, int) {
 	return px, py
 }
 
-func handleBoard(g *Game) {
+func handleBoard(g *Game, x int, y int, num int) {
+	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tile_right, _, err := ebitenutil.NewImageFromFile("assets/images/numbers_right.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tile_wrong, _, err := ebitenutil.NewImageFromFile("assets/images/numbers_wrong.png")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if g.board.tiles[x][y].isEditable {
+		if num == 0 {
+			g.board.tiles[x][y].Value = 0
+			g.board.tiles[x][y].Img = tile
+		} else if g.aux[x][y].Value == num {
+			g.board.tiles[x][y].Value = num
+			g.board.tiles[x][y].Img = tile_right
+			g.board.tiles[x][y].isEditable = false
+			g.board.tiles[x][y].isRight = true
+		} else {
+			g.board.tiles[x][y].Value = num
+			g.board.tiles[x][y].Img = tile_wrong
+			g.misses++
+		}
+	}
+}
+
+func handleGame(g *Game) {
 
 }
 
@@ -150,12 +182,13 @@ func restart(g *Game) {
 
 		fillAuxBoard(g)
 		fillBoard(g)
+
+		removeSome(g)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		printAuxBoard(g)
 		printBoard(g)
 	}
-
 }
 
 func whereWasClicked(x int, y int) (int, int) {
@@ -355,18 +388,6 @@ func whereWasClicked(x int, y int) (int, int) {
 	return -1, -1
 }
 
-func isInBounds(g *Game, px int, py int) bool {
-	if px != -1 && py != -1 {
-		return g.board.tiles[px][py].Value == 0
-	}
-	return false
-}
-
-func isInAux(g *Game, px int, py int) bool {
-
-	return false
-}
-
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{180, 180, 180, 255})
 
@@ -473,6 +494,8 @@ func main() {
 
 	removeSome(game)
 
+	tileStats(game)
+
 	ebiten.SetWindowSize(SCREEN_WIDTH*2, SCREEN_HEIGHT*2)
 	ebiten.SetWindowTitle("SUDOKU by Rafael Goulart")
 	if err := ebiten.RunGame(game); err != nil {
@@ -481,11 +504,6 @@ func main() {
 }
 
 func removeSome(g *Game) {
-	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	squares := SIDE * SIDE
 	empties := squares * 3 / 4
 
@@ -499,10 +517,7 @@ func removeSome(g *Game) {
 	})
 
 	for _, p := range positions[:empties] {
-		g.board.tiles[p/SIDE][p%SIDE].Img = tile
 		g.board.tiles[p/SIDE][p%SIDE].Value = 0
-		g.board.tiles[p/SIDE][p%SIDE].isEditable = true
-		g.board.tiles[p/SIDE][p%SIDE].isRight = false
 	}
 }
 
@@ -560,46 +575,41 @@ func createAuxBoard(g *Game) {
 }
 
 func createBoard(g *Game) {
-	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	for r := 0; r < ROWS; r++ {
 		for c := 0; c < COLUMNS; c++ {
-			g.board.tiles[r][c].Img = tile
 			g.board.tiles[r][c].Value = 0
-			g.board.tiles[r][c].isEditable = true
-			g.board.tiles[r][c].isRight = false
 		}
 	}
 }
 
 func fillBoard(g *Game) {
-	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
-	if err != nil {
-		log.Fatal(err)
+	for i := 0; i < ROWS; i++ {
+		for j := 0; j < COLUMNS; j++ {
+			g.board.tiles[i][j].Value = g.aux[i][j].Value
+		}
 	}
+	printBoard(g)
+	printAuxBoard(g)
+}
 
-	tile_right, _, err := ebitenutil.NewImageFromFile("assets/images/numbers_right.png")
+func tileStats(g *Game) {
+	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for i := 0; i < ROWS; i++ {
 		for j := 0; j < COLUMNS; j++ {
-			g.board.tiles[i][j].Value = g.aux[i][j].Value
-			if g.board.tiles[i][j].Value != 0 {
-				g.board.tiles[i][j].Img = tile_right
+			if g.board.tiles[i][j].Value == 0 {
+				g.board.tiles[i][j].isEditable = true
+				g.board.tiles[i][j].isRight = false
+			} else {
 				g.board.tiles[i][j].isEditable = false
 				g.board.tiles[i][j].isRight = true
-			} else {
-				g.board.tiles[i][j].Img = tile
 			}
+			g.board.tiles[i][j].Img = tile
 		}
 	}
-	printBoard(g)
-	printAuxBoard(g)
 }
 
 func printBoard(g *Game) {
