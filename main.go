@@ -31,10 +31,10 @@ const (
 	BASE = 3
 	SIDE = BASE * BASE
 
-	MESSAGE_MOVES  = "Moves: %d"
-	MESSAGE_MISSES = "Misses: %d"
-	MESSAGE_LOST   = "Too many misses! You lose :/"
-	MESSAGE_WON    = "NICE, You completed the board!"
+	MESSAGE_MOVES   = "Moves: %d"
+	MESSAGE_MISSES  = "Misses: %d"
+	MESSAGE_DEFEAT  = "Too many misses! You lose :/"
+	MESSAGE_VICTORY = "NICE, You completed the board!"
 
 	STARTING_NUMBERS = 38
 )
@@ -169,18 +169,28 @@ func handleBoard(g *Game, x int, y int, num int) {
 			g.board.tiles[x][y].Img = tile_wrong
 			g.misses++
 		}
-		handleWon(g)
+		if handleVictory(g) {
+			g.state = 2
+			g.message = MESSAGE_VICTORY
+		}
 	}
 }
 
-func handleWon(g *Game) {
-
+func handleVictory(g *Game) bool {
+	for r := 0; r < ROWS; r++ {
+		for c := 0; c < COLUMNS; c++ {
+			if !g.board.tiles[r][c].isRight {
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func handleMisses(g *Game) {
 	if g.misses == 10 {
 		g.state = 0
-		g.message = MESSAGE_LOST
+		g.message = MESSAGE_DEFEAT
 	}
 }
 
@@ -188,6 +198,7 @@ func restart(g *Game) {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		g.misses = 0
 		g.state = 1
+		g.message = ""
 		createAuxBoard(g)
 		createBoard(g)
 
@@ -195,6 +206,7 @@ func restart(g *Game) {
 		fillBoard(g)
 
 		removeSome(g)
+		tileStats(g)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		printAuxBoard(g)
@@ -463,7 +475,7 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 func drawStats(g *Game, screen *ebiten.Image) {
 	misses := fmt.Sprintf(MESSAGE_MISSES, g.misses)
 
-	ebitenutil.DebugPrintAt(screen, g.message, 0, 291)
+	ebitenutil.DebugPrintAt(screen, g.message, 1, 291)
 	ebitenutil.DebugPrintAt(screen, misses, 216, 291)
 
 }
@@ -506,8 +518,7 @@ func main() {
 	fillBoard(game)
 
 	removeSome(game)
-
-	tileStats(game)
+	addStats(game)
 
 	ebiten.SetWindowSize(SCREEN_WIDTH*2, SCREEN_HEIGHT*2)
 	ebiten.SetWindowTitle("SUDOKU by Rafael Goulart")
@@ -605,7 +616,7 @@ func fillBoard(g *Game) {
 	printAuxBoard(g)
 }
 
-func tileStats(g *Game) {
+func addStats(g *Game) {
 	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
 	if err != nil {
 		log.Fatal(err)
