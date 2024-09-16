@@ -33,7 +33,7 @@ Press space bar to Restart game
   
   ❌ Show numbers left on all board \
   ❌ Show numbers available on current selected square \
-  ❌ Highlight squares of the same row and column of selected square \
+  ❌ Highlight squares on the same row and column of selected square \
   ❌ Highlight same number selected on surrounding squares \
   ❌ Add a timer \
   ❌ Add difficulties
