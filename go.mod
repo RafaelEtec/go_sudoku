@@ -1,4 +1,4 @@
-module github.com/rafaeletec/go_game
+module github.com/rafaeletec/go_sudoku
 
 go 1.23.0
 
