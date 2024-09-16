@@ -140,17 +140,18 @@ func handleMouse() (int, int) {
 }
 
 func handleBoard(g *Game, x int, y int, num int) {
-	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
+
+	tile, err := ebitenutil.NewImageFromURL("https://github.com/RafaelEtec/go_sudoku/blob/31af9f64952f8e622d8403e2febd2d6bb994a625/assets/images/numbers.png?raw=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tile_right, _, err := ebitenutil.NewImageFromFile("assets/images/numbers_right.png")
+	tile_right, err := ebitenutil.NewImageFromURL("https://github.com/RafaelEtec/go_sudoku/blob/31af9f64952f8e622d8403e2febd2d6bb994a625/assets/images/numbers_right.png?raw=true")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	tile_wrong, _, err := ebitenutil.NewImageFromFile("assets/images/numbers_wrong.png")
+	tile_wrong, err := ebitenutil.NewImageFromURL("https://github.com/RafaelEtec/go_sudoku/blob/31af9f64952f8e622d8403e2febd2d6bb994a625/assets/images/numbers_wrong.png?raw=true")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -617,7 +618,7 @@ func fillBoard(g *Game) {
 }
 
 func addStats(g *Game) {
-	tile, _, err := ebitenutil.NewImageFromFile("assets/images/numbers.png")
+	tile, err := ebitenutil.NewImageFromURL("https://github.com/RafaelEtec/go_sudoku/blob/31af9f64952f8e622d8403e2febd2d6bb994a625/assets/images/numbers.png?raw=true")
 	if err != nil {
 		log.Fatal(err)
 	}
