@@ -88,16 +88,17 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 
 func (g *Game) Update() error {
 	if g.state == 1 {
-		px, py := handleMouse()
+		px, py := handleMouse(g)
 		if px != -1 && py != -1 {
 			X = px
 			Y = py
 		}
+
 		handleKeyboard(g, Y, X)
 		handleMisses(g)
 	}
 
-	restart(g)
+	options(g)
 
 	return nil
 }
@@ -128,13 +129,11 @@ func handleKeyboard(g *Game, x int, y int) {
 	}
 }
 
-func handleMouse() (int, int) {
+func handleMouse(g *Game) (int, int) {
 	px, py := -1, -1
 	if inpututil.IsMouseButtonJustPressed(0) {
 		x, y := ebiten.CursorPosition()
-		fmt.Printf("X: %d\nY: %d\n", x, y)
 		px, py = whereWasClicked(x, y)
-		fmt.Printf("X: %d\nY: %d\n", px, py)
 	}
 	return px, py
 }
@@ -170,11 +169,20 @@ func handleBoard(g *Game, x int, y int, num int) {
 			g.board.tiles[x][y].Img = tile_wrong
 			g.misses++
 		}
+
 		if handleVictory(g) {
 			g.state = 2
 			g.message = MESSAGE_VICTORY
 		}
 	}
+}
+
+func highlightRowAndColumn(g *Game, x int, y int) {
+
+}
+
+func hightlightSurroundingNumbers(g *Game, num int) {
+
 }
 
 func handleVictory(g *Game) bool {
@@ -195,24 +203,54 @@ func handleMisses(g *Game) {
 	}
 }
 
-func restart(g *Game) {
+func options(g *Game) {
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-		g.misses = 0
-		g.state = 1
-		g.message = ""
-		createAuxBoard(g)
-		createBoard(g)
-
-		fillAuxBoard(g)
-		fillBoard(g)
-
-		removeSome(g)
-		addStats(g)
+		restart(g)
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
-		printAuxBoard(g)
-		printBoard(g)
+		showSolution(g)
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyG) {
+		cheat(g)
+	}
+}
+
+func cheat(g *Game) {
+	tile_right, err := ebitenutil.NewImageFromURL("https://github.com/RafaelEtec/go_sudoku/blob/31af9f64952f8e622d8403e2febd2d6bb994a625/assets/images/numbers_right.png?raw=true")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for r := 0; r < ROWS; r++ {
+		for c := 0; c < COLUMNS; c++ {
+			if g.board.tiles[r][c].Value == 0 {
+				g.board.tiles[r][c].Value = g.aux[r][c].Value
+				g.board.tiles[r][c].Img = tile_right
+				g.board.tiles[r][c].isEditable = false
+				g.board.tiles[r][c].isRight = true
+			}
+		}
+	}
+
+	g.state = 2
+	g.message = MESSAGE_VICTORY
+}
+
+func restart(g *Game) {
+	g.misses = 0
+	g.state = 1
+	g.message = ""
+	createAuxBoard(g)
+	createBoard(g)
+
+	fillAuxBoard(g)
+	fillBoard(g)
+
+	removeSome(g)
+	addStats(g)
+}
+
+func showSolution(g *Game) {
+	printAuxBoard(g)
 }
 
 func whereWasClicked(x int, y int) (int, int) {
@@ -468,6 +506,7 @@ func drawTiles(g *Game, opts ebiten.DrawImageOptions, screen *ebiten.Image) {
 				).(*ebiten.Image),
 				&opts,
 			)
+
 			opts.GeoM.Reset()
 		}
 	}
@@ -613,8 +652,6 @@ func fillBoard(g *Game) {
 			g.board.tiles[i][j].Value = g.aux[i][j].Value
 		}
 	}
-	printBoard(g)
-	printAuxBoard(g)
 }
 
 func addStats(g *Game) {
@@ -635,21 +672,6 @@ func addStats(g *Game) {
 			g.board.tiles[i][j].Img = tile
 		}
 	}
-}
-
-func printBoard(g *Game) {
-	for i := 0; i < ROWS; i++ {
-		for j := 0; j < COLUMNS; j++ {
-			if j == ROWS-1 {
-				fmt.Print(g.board.tiles[i][j].Value)
-			} else {
-				fmt.Print(g.board.tiles[i][j].Value, "-")
-			}
-			time.Sleep(time.Millisecond * 1)
-		}
-		fmt.Println("")
-	}
-	fmt.Println("")
 }
 
 func printAuxBoard(g *Game) {
