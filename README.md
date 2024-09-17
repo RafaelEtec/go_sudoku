@@ -35,7 +35,7 @@ Press space bar to Restart game
   ❌ Show numbers available on current selected square \
   ❌ Highlight squares on the same row and column of selected square \
   ❌ Highlight same number selected on surrounding squares \
-  ❌ Add a timer \
+  ❌ Add timer \
   ❌ Add difficulties
   
 </details>
