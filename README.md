@@ -14,7 +14,7 @@ go run github.com/rafaeletec/go_sudoku@latest
 <summary>Built with</summary>
   
 > [Go](https://go.dev/doc/install) \
-> [Ebiten](https://ebitengine.org/en/documents/install.html)
+> [Ebiten](https://ebitengine.org/en/documents/install.html) \
 > [Piskel](https://www.piskelapp.com/)
 
 </details>
